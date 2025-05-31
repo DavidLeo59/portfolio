@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>David Leo - Professional Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Base styles for the body and smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0A1128; /* Deep Midnight Blue - Primary background */
+            color: #C0C0C0; /* Subtle Silver/Light Gray for text */
+            /* Re-added padding-top to ensure content starts below the fixed navbar */
+            padding-top: 72px; /* Optimized to account for fixed navbar height */
+            overflow-x: hidden; /* Prevent horizontal scroll from animations */
+            cursor: none; /* Hide default cursor to use custom one */
+            position: relative; /* Needed for section backgrounds */
+            z-index: 1; /* Ensure content is above background */
+        }
+
+        /* Section Title Styling */
+        .section-title {
+            position: relative;
+            display: inline-block;
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+            color: #E2E8F0; /* Brighter text for titles */
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50%; /* Underline effect */
+            height: 3px;
+            background: linear-gradient(to right, #00E0FF, #6366F1); /* Electric Teal to Indigo gradient */
+            border-radius: 9999px;
+        }
+
+        /* Card and Interactive Element Styling with 3D-like effects and glows */
+        .card-glow {
+            position: relative;
+            border-radius: 1rem; /* rounded-xl */
+            overflow: hidden;
+            background: #1E293B; /* Darker Slate for card background */
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            border: 1px solid rgba(0, 224, 255, 0.1); /* Subtle border */
+        }
+        .card-glow:hover {
+            transform: translateY(-8px) scale(1.02); /* Pop out and slightly enlarge */
+            box-shadow: 0 15px 25px -5px rgba(0, 224, 255, 0.3), 0 5px 10px -2px rgba(0, 224, 255, 0.2); /* Teal glow */
+        }
+        .card-glow::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(0, 224, 255, 0.1), transparent 70%); /* Inner glow effect */
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 0;
+        }
+        .card-glow:hover::before {
+            opacity: 1;
+        }
+
+        /* Primary Button Styling with 3D-like effects */
+        .btn-primary {
+            background: linear-gradient(to right, #00E0FF, #6366F1); /* Electric Teal to Indigo gradient */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-position 0.4s ease-in-out;
+            background-size: 200% auto; /* For gradient animation */
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px); /* Lift effect */
+            box-shadow: 0 8px 15px rgba(0, 224, 255, 0.4); /* Teal shadow */
+            background-position: right center; /* Animate gradient */
+        }
+
+        /* Social Icon Styling */
+        .social-icon {
+            transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+        .social-icon:hover {
+            transform: translateY(-5px) scale(1.2); /* Lift and enlarge */
+            color: #00E0FF; /* Electric Teal */
+        }
+
+        /* Initial hidden state for elements that will animate */
+        .initial-hidden-state {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        /* Class for elements that will animate on scroll or tab activation */
+        .animate-visible {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out; /* Smooth transition */
+        }
+
+        /* Staggered animation delays */
+        .animation-delay-200 { transition-delay: 0.2s; }
+        .animation-delay-400 { transition-delay: 0.4s; }
+        .animation-delay-600 { transition-delay: 0.6s; }
+        .animation-delay-800 { transition-delay: 0.8s; }
+        .animation-delay-1000 { transition-delay: 1s; }
+
+        /* Three.js Canvas for Hero Background */
+        #heroCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Behind content */
+            pointer-events: none; /* Allows interaction with content */
+        }
+
+        /* Custom Main Cursor Styling (Small, Solid Circle) */
+        #cursor-main {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 10px; /* Smaller size */
+            height: 10px; /* Smaller size */
+            background-color: rgba(0, 224, 255, 0.8); /* Electric Teal */
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(1); /* Center and initial scale */
+            transition: background-color 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.3s ease-out;
+            z-index: 9999;
+            box-shadow: 0 0 8px rgba(0, 224, 255, 0.7), inset 0 0 5px rgba(0, 224, 255, 0.4); /* Outer and inner glow */
+        }
+
+        /* Hover state for the custom main cursor */
+        .interactive-element:hover + #cursor-main {
+            background-color: rgba(99, 102, 241, 0.9); /* Change color to Indigo on hover */
+            transform: translate(-50%, -50%) scale(1.5); /* Larger on hover */
+            box-shadow: 0 0 15px rgba(99, 102, 241, 1), inset 0 0 10px rgba(99, 102, 241, 0.6); /* Stronger glow on hover */
+        }
+
+        /* Cursor Trailing Effect (Tiny, Fading Dots) */
+        .cursor-trail-dot {
+            position: absolute;
+            width: 2px; /* Very small size */
+            height: 2px; /* Very small size */
+            background-color: rgba(0, 224, 255, 0.4); /* Semi-transparent Electric Teal */
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(1);
+            animation: fadeOutAndShrink 0.5s forwards; /* Shorter duration, smooth fade and shrink */
+            z-index: 9998; /* Behind the main cursor */
+            box-shadow: 0 0 1px rgba(0, 224, 255, 0.5); /* Subtle glow */
+        }
+        @keyframes fadeOutAndShrink {
+            from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            to { opacity: 0; transform: translate(-50%, -50%) scale(0.1); } /* Fade and shrink to very small */
+        }
+
+
+        /* Tab styling for Experience section */
+        .tab-button {
+            padding: 12px 24px;
+            border-radius: 0.75rem; /* rounded-xl */
+            font-weight: 600;
+            transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            border: 1px solid transparent;
+        }
+        .tab-button.active {
+            background: linear-gradient(to right, #00E0FF, #6366F1);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 224, 255, 0.3);
+            border-color: #00E0FF;
+        }
+        .tab-button:not(.active) {
+            background-color: #1E293B; /* Darker Slate */
+            color: #94A3B8; /* Slate 400 */
+            border-color: #334155; /* Slate 700 */
+        }
+        .tab-button:not(.active):hover {
+            background-color: #334155; /* Slate 700 */
+            color: #E2E8F0; /* Light Slate */
+            box-shadow: 0 2px 8px rgba(0, 224, 255, 0.1);
+        }
+        .tab-content {
+            display: none;
+            padding-top: 2rem;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Navigation Link Base Styling */
+        .nav-link {
+            padding: 8px 12px; /* Adjusted padding to be slightly larger */
+            border-radius: 0.5rem; /* Rounded corners for the rectangle */
+            font-weight: 500; /* Slightly lighter font weight for better visual balance */
+            color: #94A3B8; /* Initial text color */
+            transition: background 0.4s ease-in-out, color 0.4s ease-in-out, transform 0.3s ease-in-out, box-shadow 0.4s ease-in-out;
+            text-decoration: none; /* Remove underline */
+            display: inline-block; /* Ensure padding and background apply correctly */
+        }
+
+        .nav-link:not(.active):hover {
+            background-color: rgba(99, 102, 241, 0.15); /* Subtle indigo background on hover */
+            color: #6366F1; /* Change text color to indigo on hover */
+            transform: translateY(-2px); /* Slight lift on hover */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow on hover */
+        }
+
+        /* Navigation Link Active State (Rectangle) */
+        .nav-link.active {
+            background: linear-gradient(to right, #00E0FF, #6366F1); /* Electric Teal to Indigo gradient */
+            color: white; /* Text color for active state */
+            transform: scale(1.05); /* Slightly larger */
+            box-shadow: 0 8px 20px rgba(0, 224, 255, 0.4); /* More prominent glow for active state */
+        }
+
+        /* Custom scrollbar (optional, for aesthetics) */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0A1128;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #00E0FF, #6366F1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #6366F1, #00E0FF);
+        }
+
+        /* --- Section Specific Background Animations --- */
+
+        /* About Section Background Animation (Subtle Particle Field) */
+        .about-bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+            background: transparent; /* Start with transparent background */
+        }
+        .about-bg-animation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(0, 224, 255, 0.05) 0%, transparent 70%);
+            background-size: 200% 200%;
+            animation: particle-field-move 40s linear infinite;
+        }
+
+        @keyframes particle-field-move {
+            0% { background-position: 0% 0%; opacity: 0.6; }
+            25% { background-position: 50% 25%; opacity: 0.7; }
+            50% { background-position: 100% 50%; opacity: 0.6; }
+            75% { background-position: 50% 75%; opacity: 0.7; }
+            100% { background-position: 0% 100%; opacity: 0.6; }
+        }
+
+
+        /* Experience Section Background Animation (Binary Matrix Rain) */
+        .experience-bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+            background: linear-gradient(to bottom, transparent, rgba(0, 224, 255, 0.05), transparent);
+            background-size: 100% 200px; /* Height of the falling "rain" */
+            animation: matrix-rain 15s linear infinite;
+        }
+
+        @keyframes matrix-rain {
+            0% { background-position: 0 -100%; }
+            100% { background-position: 0 200%; }
+        }
+
+        /* Skills Section Background Animation (Digital Flow Stream) */
+        .skills-bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, rgba(0, 224, 255, 0.1) 0%, transparent 70%);
+            background-size: 200% 200%;
+            animation: digital-flow 20s linear infinite;
+        }
+
+        @keyframes digital-flow {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+
+        /* Certificates Section Background Animation (Particle Drift) */
+        .certificates-bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+            animation: particle-drift 30s linear infinite;
+        }
+        @keyframes particle-drift {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+
+
+        /* Reviews Section Background Animation (Cosmic Swirl) */
+        .reviews-bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+            background: conic-gradient(from 0deg at 50% 50%, rgba(0, 224, 255, 0.03) 0%, transparent 20%, rgba(99, 102, 241, 0.03) 40%, transparent 60%, rgba(0, 224, 255, 0.03) 80%, transparent 100%);
+            animation: cosmic-swirl 40s linear infinite;
+        }
+
+        @keyframes cosmic-swirl {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Contact Section Background Animation (Dynamic Hex Grid) */
+        .contact-bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(45deg, rgba(0, 224, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(-45deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            animation: hex-grid-pulse 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes hex-grid-pulse {
+            0% { background-position: 0 0; opacity: 0.7; }
+            50% { background-position: 20px 20px; opacity: 0.9; }
+            100% { background-position: 0 0; opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="cursor-main"></div>
+
+    <nav class="bg-gray-900 bg-opacity-80 backdrop-blur-md fixed w-full z-50 shadow-xl rounded-b-xl" style="top: 0;">
+        <div class="container mx-auto px-4 py-4 flex justify-center items-center">
+            <div class="flex space-x-6">
+                <a href="#about" class="nav-link text-gray-300 hover:text-indigo-400 transition-colors duration-200 font-medium px-3 py-2 rounded-md interactive-element">About</a>
+                <a href="#experience" class="nav-link text-gray-300 hover:text-indigo-400 transition-colors duration-200 font-medium px-3 py-2 rounded-md interactive-element">Experience</a>
+                <a href="#skills" class="nav-link text-gray-300 hover:text-indigo-400 transition-colors duration-200 font-medium px-3 py-2 rounded-md interactive-element">Skills</a>
+                <a href="#certificates" class="nav-link text-gray-300 hover:text-indigo-400 transition-colors duration-200 font-medium px-3 py-2 rounded-md interactive-element">Certificates</a>
+                <a href="#reviews" class="nav-link text-gray-300 hover:text-indigo-400 transition-colors duration-200 font-medium px-3 py-2 rounded-md interactive-element">Reviews</a>
+                <a href="#contact" class="nav-link text-gray-300 hover:text-indigo-400 transition-colors duration-200 font-medium px-3 py-2 rounded-md interactive-element">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <section id="hero" class="relative min-h-screen flex items-center justify-center text-center overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
+        <canvas id="heroCanvas"></canvas>
+        <div class="absolute inset-0 z-0 opacity-10" style="background-image: radial-gradient(#2D3748 1px, transparent 1px); background-size: 40px 40px;"></div>
+        <div class="absolute inset-0 z-0 bg-gradient-to-b from-transparent to-gray-900 opacity-50"></div>
+
+        <div class="relative z-10 p-8 max-w-4xl mx-auto rounded-xl bg-gray-800 bg-opacity-70 shadow-2xl border border-indigo-500 border-opacity-30">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4 initial-hidden-state">
+                Innovating <span class="text-indigo-400">Digital Connections</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-300 mb-8 initial-hidden-state animation-delay-200">
+                Crafting seamless experiences in Community, Social Media, and Customer Relations.
+            </p>
+            <a href="#contact" class="btn-primary inline-block px-8 py-4 text-lg font-semibold text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 initial-hidden-state animation-delay-400 interactive-element">
+                Let's Connect
+            </a>
+        </div>
+    </section>
+
+    <section id="about" class="py-20 bg-gray-900 relative">
+        <div class="about-bg-animation"></div>
+        <div class="container mx-auto px-4 max-w-5xl text-center relative z-10">
+            <div class="flex justify-center items-center mb-8 initial-hidden-state animation-delay-200">
+                <img src="https://media.discordapp.net/attachments/1265942700767580254/1378311713169866823/Daud_Asad_David_Leo_.jpeg?ex=683c2450&is=683ad2d0&hm=aeb5ccd8f089783f845e4a7b3065604070aa17ca68604c9aea63580f6e5dcc16&=&format=webp&width=656&height=656"
+                     onerror="this.onerror=null;this.src='https://placehold.co/400x400/1E293B/E2E8F0?text=Daud+Asad+Image';"
+                     alt="Daud Asad (David Leo)" class="rounded-full shadow-lg border-4 border-indigo-500 border-opacity-50 w-64 h-64 object-cover mx-auto">
+            </div>
+            <h2 class="text-4xl font-bold text-white mb-4 initial-hidden-state animation-delay-300">David Leo</h2>
+            <div class="text-lg leading-relaxed initial-hidden-state animation-delay-600">
+                <p class="mb-4">My name is Daud Asad, socially known as David Leo. I am a dedicated and results-driven professional with over 5 years of experience in community management, virtual assistance, customer support, and project coordination across the Web3, tech, and startup sectors.</p>
+                <p class="mb-4">Throughout my career, I have worked with a range of forward-thinking companies to help build, manage, and grow engaged online communities, especially on platforms like Discord, Telegram, and Twitter (X). My strengths lie in combining technical knowledge, strong communication, and problem-solving to create seamless experiences for both users and internal teams.</p>
+                <p>I am proficient in CRM systems, customer relationship management, issue resolution, and live chat/email support, adept at handling customer inquiries with professionalism, empathy, and efficiency. My focus is always on improving processes and enhancing the overall customer and community experience.</p>
+            </div>
+            </div>
+    </section>
+
+    <section id="experience" class="py-20 bg-gray-800 relative">
+        <div class="experience-bg-animation"></div>
+        <div class="container mx-auto px-4 max-w-6xl relative z-10">
+            <h2 class="text-4xl font-bold text-white mb-12 text-center section-title mx-auto initial-hidden-state">Experience</h2>
+
+            <div class="flex justify-center mb-8 initial-hidden-state animation-delay-200">
+                <button class="tab-button active" data-tab="csr">Customer Service Representative / CRM</button>
+                <button class="tab-button ml-4" data-tab="community">Community Manager / Social Media Manager</button>
+            </div>
+
+            <div id="csr-content" class="tab-content active">
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="card-glow p-6 initial-hidden-state animation-delay-200">
+                        <h3 class="text-xl font-semibold text-white mb-2">Customer Relation Management</h3>
+                        <p class="text-indigo-400 mb-1">Discord International</p>
+                        <p class="text-sm text-gray-400 mb-4">Sep 2021 - Mar 2025</p>
+                        <ul class="list-disc list-inside text-gray-300 space-y-2">
+                            <li>Led and enhanced engagement within Discord communities for leading Web3 brands including Thovt, Defactors, and Tulip.</li>
+                            <li>Utilized expert communication and problem-solving skills to manage customer and client interactions, driving trust and strengthening brand presence on the platform.</li>
+                        </ul>
+                    </div>
+                    <div class="card-glow p-6 initial-hidden-state animation-delay-400">
+                        <h3 class="text-xl font-semibold text-white mb-2">Social Media Support Specialist</h3>
+                        <p class="text-indigo-400 mb-1">Twitter (X) | Europe</p>
+                        <p class="text-sm text-gray-400 mb-4">Jun 2021 - Sep 2024</p>
+                        <ul class="list-disc list-inside text-gray-300 space-y-2">
+                            <li>Elevated brand presence on Twitter for Web3 projects by implementing strategic communication and customer-focused engagement.</li>
+                            <li>Managed interactions with followers and clients to build a positive and active online community.</li>
+                        </ul>
+                    </div>
+                    <div class="card-glow p-6 initial-hidden-state animation-delay-600">
+                        <h3 class="text-xl font-semibold text-white mb-2">Customer Service Representative</h3>
+                        <p class="text-indigo-400 mb-1">Fleamint Singapore</p>
+                        <p class="text-sm text-gray-400 mb-4">Sep 2023 - Jul 2024</p>
+                        <ul class="list-disc list-inside text-gray-300 space-y-2">
+                            <li>Delivered exceptional customer support and relationship management, handling tickets and user queries.</li>
+                            <li>Resolved issues and maintained strong communication across multiple platforms.</li>
+                            <li>Successfully managed user and investor relations, contributing to customer satisfaction and retention.</li>
+                            <li>Supported community initiatives by assisting in the growth and moderation of online communities.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-8 text-center initial-hidden-state animation-delay-800">
+                    <a href="DAUD ASAD (David Leo) - (CSR _ CRM).pdf" download="DAUD ASAD (David Leo) - CSR_CRM_Resume.pdf"
+                       class="btn-primary inline-flex items-center px-8 py-4 text-lg font-semibold text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 interactive-element">
+                        <i class="fas fa-download mr-3"></i> Download Resume (CSR/CRM)
+                    </a>
+                </div>
+            </div>
+
+            <div id="community-content" class="tab-content">
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="card-glow p-6 initial-hidden-state animation-delay-200">
+                        <h3 class="text-xl font-semibold text-white mb-2">Community Manager</h3>
+                        <p class="text-indigo-400 mb-1">Thovt Dubai</p>
+                        <p class="text-sm text-gray-400 mb-4">Jun 2024 - Mar 2025</p>
+                        <ul class="list-disc list-inside text-gray-300 space-y-2">
+                            <li>Managed Thovt end-to-end as a one-person operation and scaled its online communities across Discord (20K+ members), Twitter (15K+ followers), Telegram (10K+ members), and Zealy (over $250,000 campaign value).</li>
+                            <li>Successfully handled all tasks under pressure, including community engagement, content creation, and campaign execution.</li>
+                            <li>Led complete Zealy operations from task creation to review and performance tracking.</li>
+                            <li>Applied strategic growth tactics and creative engagement methods to drive meaningful interactions and foster strong user relationships.</li>
+                        </ul>
+                    </div>
+                    <div class="card-glow p-6 initial-hidden-state animation-delay-400">
+                        <h3 class="text-xl font-semibold text-white mb-2">Community Manager</h3>
+                        <p class="text-indigo-400 mb-1">Fleamint Singapore</p>
+                        <p class="text-sm text-gray-400 mb-4">Sep 2023 - Jul 2024</p>
+                        <ul class="list-disc list-inside text-gray-300 space-y-2">
+                            <li>Initiated and managed nine projects at Fleamint, leading the setup and growth of dedicated Discord servers for each.</li>
+                            <li>Built and developed communities while providing ongoing operational support.</li>
+                            <li>Demonstrated exceptional management skills by effectively leading and mentoring collab managers, ambassadors, and moderators.</li>
+                            <li>Focused on streamlining communication, enhancing cross-team communication, and ensuring the successful achievement of project goals.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-8 text-center initial-hidden-state animation-delay-800">
+                    <a href="Daud Asad (David Leo) - Community Manager.pdf" download="Daud Asad (David Leo) - Community_Manager_Resume.pdf"
+                       class="btn-primary inline-flex items-center px-8 py-4 text-lg font-semibold text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 interactive-element">
+                        <i class="fas fa-download mr-3"></i> Download Resume (Community Manager)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="skills" class="py-20 bg-gray-900 relative">
+        <div class="skills-bg-animation"></div>
+        <div class="container mx-auto px-4 max-w-6xl relative z-10">
+            <h2 class="text-4xl font-bold text-white mb-12 text-center section-title mx-auto initial-hidden-state">Skills</h2>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="card-glow p-6 initial-hidden-state animation-delay-200">
+                    <h3 class="text-xl font-semibold text-white mb-4">Customer Support & CRM</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2">
+                        <li>Ticket Management</li>
+                        <li>User Query Resolution</li>
+                        <li>Customer Support</li>
+                        <li>Customer Relationship Management (CRM)</li>
+                        <li>Investor & Client Relations</li>
+                        <li>Live Chat/Email Support</li>
+                    </ul>
+                </div>
+                <div class="card-glow p-6 initial-hidden-state animation-delay-400">
+                    <h3 class="text-xl font-semibold text-white mb-4">Communication & Problem Solving</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2">
+                        <li>Communication Skills</li>
+                        <li>Conflict Resolution</li>
+                        <li>Technical Troubleshooting</li>
+                        <li>Interpersonal Skills</li>
+                        <li>Written Communication</li>
+                        <li>Verbal Communication</li>
+                        <li>Client Relations</li>
+                        <li>Cross-Team Collaboration</li>
+                    </ul>
+                </div>
+                <div class="card-glow p-6 initial-hidden-state animation-delay-600">
+                    <h3 class="text-xl font-semibold text-white mb-4">Management & Marketing</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2">
+                        <li>Community Management</li>
+                        <li>Social Media Manager</li>
+                        <li>Community Marketing</li>
+                        <li>Email Management</li>
+                        <li>Brand Visibility & Customer Interaction</li>
+                    </ul>
+                </div>
+                <div class="card-glow p-6 initial-hidden-state animation-delay-200">
+                    <h3 class="text-xl font-semibold text-white mb-4">Project & Business Management</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2">
+                        <li>Project Planning & Execution</li>
+                        <li>Client Relations</li>
+                        <li>Project Management</li>
+                        <li>Time Management</li>
+                        <li>Prioritization</li>
+                        <li>Team Collaboration</li>
+                        <li>Data Collection & Feedback Analysis</li>
+                    </ul>
+                </div>
+                <div class="card-glow p-6 initial-hidden-state animation-delay-400">
+                    <h3 class="text-xl font-semibold text-white mb-4">Analytical & Reporting Skills</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2">
+                        <li>Data Analysis</li>
+                        <li>Performance Tracking</li>
+                        <li>Customer Feedback Analysis</li>
+                        <li>Reporting & Documentation</li>
+                        <li>KPI Monitoring</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="certificates" class="py-20 bg-gray-800 relative">
+        <div class="certificates-bg-animation"></div>
+        <div class="container mx-auto px-4 max-w-6xl relative z-10">
+            <h2 class="text-4xl font-bold text-white mb-12 text-center section-title mx-auto initial-hidden-state">Certificates & Credentials</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="card-glow p-6 initial-hidden-state animation-delay-200">
+                    <h3 class="text-xl font-semibold text-white mb-2">Customer Management</h3>
+                    <p class="text-indigo-400 mb-1">Great Learning</p>
+                    <p class="text-sm text-gray-400">Feb 2024</p>
+                </div>
+                <div class="card-glow p-6 initial-hidden-state animation-delay-400">
+                    <h3 class="text-xl font-semibold text-white mb-2">Business Analysis & Process Management</h3>
+                    <p class="text-indigo-400 mb-1">Coursera</p>
+                    <p class="text-sm text-gray-400">Dec 2023</p>
+                </div>
+                <div class="card-glow p-6 initial-hidden-state animation-delay-600">
+                    <h3 class="text-xl font-semibold text-white mb-2">Project Management</h3>
+                    <p class="text-indigo-400 mb-1">Great Learning</p>
+                    <p class="text-sm text-gray-400">Jan 2024</p>
+                </div>
+                <div class="card-glow p-6 initial-hidden-state animation-delay-200">
+                    <h3 class="text-xl font-semibold text-white mb-2">Google Analytics Certification</h3>
+                    <p class="text-indigo-400 mb-1">Google</p>
+                    <p class="text-sm text-gray-400">Dec 2023</p>
+                </div>
+                <div class="card-glow p-6 initial-hidden-state animation-delay-400">
+                    <h3 class="text-xl font-semibold text-white mb-2">Social Media Management</h3>
+                    <p class="text-indigo-400 mb-1">Great Learning</p>
+                    <p class="text-sm text-gray-400">Feb 2024</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="reviews" class="py-20 bg-gray-900 relative">
+        <div class="reviews-bg-animation"></div>
+        <div class="container mx-auto px-4 max-w-5xl relative z-10">
+            <h2 class="text-4xl font-bold text-white mb-12 text-center section-title mx-auto initial-hidden-state">What My Collaborators Say</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="card-glow p-6 initial-hidden-state animation-delay-200">
+                    <p class="text-gray-300 italic mb-4">"The impact on our community engagement was immediate and profound. Truly impressed by the strategic approach and dedication."</p>
+                    <p class="text-white font-semibold">- A Valued Partner</p>
+                </div>
+                <div class="card-glow p-6 initial-hidden-state animation-delay-400">
+                    <p class="text-gray-300 italic mb-4">"Exceptional problem-solving and a remarkable ability to foster positive relationships. An invaluable asset to any team."</p>
+                    <p class="text-white font-semibold">- A Satisfied Client</p>
+                </div>
+                <div class="card-glow p-6 initial-hidden-state animation-delay-600">
+                    <p class="text-gray-300 italic mb-4">"Consistently exceeded expectations in managing complex user inquiries. Their professionalism and efficiency are truly commendable."</p>
+                    <p class="text-white font-semibold">- A Project Lead</p>
+                </div>
+                <div class="card-glow p-6 initial-hidden-state animation-delay-800">
+                    <p class="text-gray-300 italic mb-4">"The growth and vibrancy of our online communities are a direct result of their expert management. A true leader in digital engagement."</p>
+                    <p class="text-white font-semibold">- An Industry Peer</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="py-20 bg-gray-800 relative">
+        <div class="contact-bg-animation"></div>
+        <div class="container mx-auto px-4 max-w-4xl relative z-10">
+            <h2 class="text-4xl font-bold text-white mb-12 text-center section-title mx-auto initial-hidden-state">Connect & Collaborate</h2>
+            <div class="flex justify-center space-x-8 mb-4 initial-hidden-state animation-delay-200">
+                <a href="https://www.linkedin.com/in/daudasad/" target="_blank" rel="noopener noreferrer" class="social-icon text-gray-300 hover:text-blue-500 text-5xl interactive-element">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="https://x.com/David_leo59" target="_blank" rel="noopener noreferrer" class="social-icon text-gray-300 hover:text-blue-400 text-5xl interactive-element">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="mailto:Daudkhan8537@gmail.com" class="social-icon text-gray-300 hover:text-red-500 text-5xl interactive-element">
+                    <i class="fas fa-envelope"></i>
+                </a>
+            </div>
+            <p class="text-lg text-gray-300 text-center initial-hidden-state animation-delay-400">
+                Email: <a href="mailto:Daudkhan8537@gmail.com" class="text-indigo-400 hover:underline interactive-element">Daudkhan8537@gmail.com</a>
+            </p>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 py-8 text-center text-gray-500 text-sm">
+        <p>&copy; 2025 David Leo. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // --- Three.js Background Animation for Hero Section ---
+        let scene, camera, renderer, particles, particleMaterial, particleGeometry;
+        const heroCanvas = document.getElementById('heroCanvas');
+
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: heroCanvas, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            camera.position.z = 5;
+
+            // Create particles
+            particleGeometry = new THREE.BufferGeometry();
+            const vertices = [];
+            for (let i = 0; i < 2000; i++) {
+                const x = (Math.random() - 0.5) * 200;
+                const y = (Math.random() - 0.5) * 200;
+                const z = (Math.random() - 0.5) * 200;
+                vertices.push(x, y, z);
+            }
+            particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+
+            particleMaterial = new THREE.PointsMaterial({
+                color: 0x00E0FF, // Electric Teal
+                size: 0.1,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: true
+            });
+
+            particles = new THREE.Points(particleGeometry, particleMaterial);
+            scene.add(particles);
+
+            // Add subtle ambient light
+            const ambientLight = new THREE.AmbientLight(0x404040); // soft white light
+            scene.add(ambientLight);
+
+            // Add a directional light for some depth
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+
+            animateThreeJS();
+        }
+
+        function animateThreeJS() {
+            requestAnimationFrame(animateThreeJS);
+
+            // Animate particles
+            particles.rotation.x += 0.0005;
+            particles.rotation.y += 0.0008;
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResizeThreeJS() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.addEventListener('resize', onWindowResizeThreeJS);
+        window.onload = initThreeJS; // Initialize Three.js when the window loads
+
+        // --- Custom Cursor Logic (Main cursor with trailing dots) ---
+        const cursorMain = document.getElementById('cursor-main');
+        const interactiveElements = document.querySelectorAll('a, button, input, textarea, .card-glow');
+        const trailContainer = document.createElement('div'); // Container for trailing dots
+        trailContainer.style.position = 'fixed';
+        trailContainer.style.top = '0';
+        trailContainer.style.left = '0';
+        trailContainer.style.pointerEvents = 'none';
+        trailContainer.style.zIndex = '9998'; // Behind the main cursor
+        document.body.appendChild(trailContainer);
+
+        document.addEventListener('mousemove', (e) => {
+            // Update main cursor position
+            if (cursorMain) {
+                cursorMain.style.left = e.clientX + 'px';
+                cursorMain.style.top = e.clientY + 'px';
+            }
+
+            // Create and append a new trailing dot
+            const trailDot = document.createElement('div');
+            trailDot.className = 'cursor-trail-dot';
+            trailDot.style.left = e.clientX + 'px';
+            trailDot.style.top = e.clientY + 'px';
+            trailContainer.appendChild(trailDot);
+
+            // Remove the trail dot after its animation completes
+            setTimeout(() => {
+                trailDot.remove();
+            }, 500); /* Matches animation duration */
+        });
+
+        interactiveElements.forEach(element => {
+            element.addEventListener('mouseenter', () => {
+                if (cursorMain) cursorMain.classList.add('active');
+            });
+            element.addEventListener('mouseleave', () => {
+                if (cursorMain) cursorMain.classList.remove('active');
+            });
+        });
+
+        // --- Scroll-triggered Animation Logic (Intersection Observer) ---
+        const animatedElements = document.querySelectorAll('.initial-hidden-state');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.remove('initial-hidden-state');
+                    entry.target.classList.add('animate-visible');
+                    // Do not unobserve here if elements might be hidden/shown by tabs later
+                    // observer.unobserve(entry.target);
+                } else {
+                    // Optional: If you want elements to re-hide when scrolled out of view
+                    // entry.target.classList.remove('animate-visible');
+                    // entry.target.classList.add('initial-hidden-state');
+                }
+            });
+        }, {
+            root: null, // viewport
+            threshold: 0.1 // Trigger when 10% of the element is visible
+        });
+
+        // Observe all animated elements initially
+        animatedElements.forEach(element => {
+            observer.observe(element);
+        });
+
+
+        // --- Sticky Header / Active Nav Link Logic (Intersection Observer) ---
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('section[id]:not(#hero)'); // Get all sections with an ID, exclude hero
+
+        const observerOptionsNav = {
+            root: null, // viewport
+            rootMargin: '-30% 0px -70% 0px', // Adjust this for more responsive activation
+            threshold: 0 // No threshold, just check intersection
+        };
+
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const id = entry.target.id;
+                const correspondingLink = document.querySelector(`.nav-link[href="#${id}"]`);
+
+                if (correspondingLink) {
+                    if (entry.isIntersecting) {
+                        // Remove active from all links first to ensure only one is active
+                        navLinks.forEach(link => link.classList.remove('active'));
+                        correspondingLink.classList.add('active');
+                    }
+                }
+            });
+        }, observerOptionsNav);
+
+        sections.forEach(section => {
+            sectionObserver.observe(section);
+        });
+
+        // Initial check on load for the first visible section (excluding hero)
+        document.addEventListener('DOMContentLoaded', () => {
+            let firstActiveFound = false;
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                // Check if the section is at least partially visible in the viewport
+                if (rect.top <= window.innerHeight && rect.bottom >= 0 && !firstActiveFound) {
+                    const id = section.id;
+                    const correspondingLink = document.querySelector(`.nav-link[href="#${id}"]`);
+                    if (correspondingLink) {
+                        navLinks.forEach(link => link.classList.remove('active')); // Clear all
+                        correspondingLink.classList.add('active');
+                        firstActiveFound = true; // Only activate the first one found
+                    }
+                    // If hero section is visible, no nav link should be active
+                    if (document.getElementById('hero').getBoundingClientRect().top >= 0 && document.getElementById('hero').getBoundingClientRect().bottom > 0) {
+                        navLinks.forEach(link => link.classList.remove('active'));
+                    }
+                }
+            });
+        });
+
+
+        // --- Tab Switching Logic for Experience Section ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            // Function to activate a tab and its content
+            function activateTab(button, content) {
+                // Deactivate all buttons and hide all content
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(cont => {
+                    cont.classList.remove('active');
+                    // Reset children to initial-hidden-state for future animations
+                    cont.querySelectorAll('.animate-visible').forEach(el => {
+                        el.classList.remove('animate-visible');
+                        el.classList.add('initial-hidden-state');
+                    });
+                });
+
+                // Activate clicked button
+                button.classList.add('active');
+
+                // Show corresponding content
+                content.classList.add('active');
+
+                // Trigger animations for elements within the active tab content
+                // Use a small delay to ensure display: block is rendered before animation starts
+                setTimeout(() => {
+                    content.querySelectorAll('.initial-hidden-state').forEach(el => {
+                        el.classList.remove('initial-hidden-state');
+                        void el.offsetWidth; // Trigger reflow
+                        el.classList.add('animate-visible');
+                    });
+                }, 50); // Small delay
+            }
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetTab = button.dataset.tab;
+                    const activeContent = document.getElementById(`${targetTab}-content`);
+                    activateTab(button, activeContent);
+                });
+            });
+
+            // Activate the first tab on initial load
+            if (tabButtons.length > 0 && tabContents.length > 0) {
+                activateTab(tabButtons[0], tabContents[0]);
+            }
+        });
+    </script>
+</body>
+</html>
