@@ -416,7 +416,7 @@
         <div class="about-bg-animation"></div>
         <div class="container mx-auto px-4 max-w-5xl text-center relative z-10">
             <div class="flex justify-center items-center mb-8 initial-hidden-state animation-delay-200">
-                <img src="https://media.discordapp.net/attachments/1265942700767580254/1378311713169866823/Daud_Asad_David_Leo_.jpeg?ex=683c2450&is=683ad2d0&hm=aeb5ccd8f089783f845e4a7b3065604070aa17ca68604c9aea63580f6e5dcc16&=&format=webp&width=656&height=656"
+                <img src="Daud Asad (David Leo) .jpeg"
                      onerror="this.onerror=null;this.src='https://placehold.co/400x400/1E293B/E2E8F0?text=Daud+Asad+Image';"
                      alt="Daud Asad (David Leo)" class="rounded-full shadow-lg border-4 border-indigo-500 border-opacity-50 w-64 h-64 object-cover mx-auto">
             </div>
@@ -493,6 +493,17 @@
                         </ul>
                     </div>
                     <div class="card-glow p-6 initial-hidden-state animation-delay-400">
+                        <h3 class="text-xl font-semibold text-white mb-2">Community Manager / Social Media Manager</h3>
+                        <p class="text-indigo-400 mb-1">Various Projects</p>
+                        <p class="text-sm text-gray-400 mb-4">Ongoing</p>
+                        <ul class="list-disc list-inside text-gray-300 space-y-2">
+                            <li>Managed and grew community engagement across diverse platforms including **Instagram, Facebook, Twitter (X), Telegram, Zealy, YouTube, and TikTok.**</li>
+                            <li>Successfully managed **two YouTube channels**, consistently generating good views even after two years, demonstrating long-term content strategy and audience retention.</li>
+                            <li>Developed and executed social media strategies to enhance brand visibility and foster active online communities.</li>
+                            <li>Coordinated with content creators and marketing teams to ensure consistent messaging and engagement.</li>
+                        </ul>
+                    </div>
+                    <div class="card-glow p-6 initial-hidden-state animation-delay-600">
                         <h3 class="text-xl font-semibold text-white mb-2">Community Manager</h3>
                         <p class="text-indigo-400 mb-1">Fleamint Singapore</p>
                         <p class="text-sm text-gray-400 mb-4">Sep 2023 - Jul 2024</p>
@@ -778,12 +789,10 @@
                 if (entry.isIntersecting) {
                     entry.target.classList.remove('initial-hidden-state');
                     entry.target.classList.add('animate-visible');
-                    // Do not unobserve here if elements might be hidden/shown by tabs later
-                    // observer.unobserve(entry.target);
                 } else {
-                    // Optional: If you want elements to re-hide when scrolled out of view
-                    // entry.target.classList.remove('animate-visible');
-                    // entry.target.classList.add('initial-hidden-state');
+                    // When element leaves view, reset it to initial-hidden-state to re-trigger on scroll back
+                    entry.target.classList.remove('animate-visible');
+                    entry.target.classList.add('initial-hidden-state');
                 }
             });
         }, {
